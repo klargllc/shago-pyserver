@@ -6,14 +6,16 @@ SECRET_KEY = 'hgs2&c7cz3lk^ubz=imhw=*(7+h7l)o%yu6=4-sj^oy(d1n7gr'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
 INSTALLED_APPS = [
     # binary.inc
+    'accounts',
     'places',
     'dashboard',
+    'metrics',
 
     # django
     'django.contrib.admin',
@@ -27,7 +29,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
-    # 'channels',
 ]
 
 MIDDLEWARE = [
@@ -43,10 +44,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'hotspot.urls'
 
+AUTH_USER_MODEL = 'accounts.Account'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -130,5 +133,10 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser'
     ]
 }

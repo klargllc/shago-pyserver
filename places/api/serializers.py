@@ -3,9 +3,15 @@ from rest_framework.serializers import (
 	StringRelatedField,
 	HyperlinkedRelatedField,
 )
-
-
 from ..models import *
+from accounts.models import(
+	Account,
+	Customer,
+	RestaurantStaff,
+	BusinessAccount,
+)
+
+
 
 class PermissionSerializer(ModelSerializer):
 	class Meta:
@@ -14,24 +20,32 @@ class PermissionSerializer(ModelSerializer):
 
 
 class UserSerializer(ModelSerializer):
-
 	class Meta:
-		fields = ('first_name', 'last_name', 'email', 'username')
-		model = User
+		fields = ('first_name', 'last_name', 'email',)
+		model = Account
+
+
+class BusinessAccountSerializer(ModelSerializer):
+	user = UserSerializer()
+	store = StringRelatedField()
+	class Meta:
+		fields = '__all__'
+		model = BusinessAccount
 
 
 class StaffSerializer(ModelSerializer):
 	user = UserSerializer()
+	place = StringRelatedField()
 	class Meta:
-		fields = ('id', 'user', 'staff_id', 'permissions')
-		model = Staff
+		fields = ('id', 'user', 'staff_id', 'permissions', 'place')
+		model = RestaurantStaff
 
 
 
 class CategorySerializer(ModelSerializer):
 	class Meta:
 		model = Category
-		fields = ('id', 'name')
+		fields = ('id', 'name', 'item_count')
 
 
 class TagSerializer(ModelSerializer):
@@ -43,13 +57,13 @@ class TagSerializer(ModelSerializer):
 class CustomerSerializer(ModelSerializer):
 	user = UserSerializer()
 	class Meta:
-		fields = '__all__'
+		fields = ('id', 'user', 'phone', 'orders')
 		model = Customer
 
 
 class FoodImageSerializer(ModelSerializer):
 	class Meta:
-		fields =('image_url',)
+		fields =('image_url', 'id')
 		model = FoodImage
 
 
@@ -70,10 +84,14 @@ class CustomizationSerializer(ModelSerializer):
 class FoodSerializer(ModelSerializer):
 	images = FoodImageSerializer(many=True)
 	customizations = CustomizationSerializer(many=True)
+	category = StringRelatedField()
+	
 	class Meta:
-		fields = ('id', 'title', 'subtitle', 'about',
-		 'price', 'image', 'tags', 'images', 
-		 'category', 'customizations', 'rating')
+		fields = (
+			'id', 'name', 'about', 'slug',
+			'price', 'image', 'tags', 'images', 
+			'category', 'customizations', 'rating',
+		)
 		model = FoodItem
 
 
@@ -81,16 +99,16 @@ class OrderItemSerializer(ModelSerializer):
 	item = FoodSerializer()
 
 	class Meta:
-		fields = ('item', 'id', 'qty', 'total')
+		fields = ('item', 'id', 'quantity', 'total')
 		model = OrderItem
 
 
 class OrderSerializer(ModelSerializer):
 	items = OrderItemSerializer(many=True)
-	owner = CustomerSerializer()
+	customer = CustomerSerializer()
 
 	class Meta:
-		fields = ('id', 'invoice', 'created_on', 'items', 'owner', 'status', 'delivery_is_on', 'subtotal')
+		fields = ('id', 'invoice', 'created_on', 'items', 'customer', 'status', 'delivery_is_on', 'subtotal')
 		model = Order
 
 
@@ -98,12 +116,22 @@ class ReviewSerializer(ModelSerializer):
 	food = StringRelatedField()
 	reviewer = StringRelatedField()
 	class Meta:
-		model = Review
-		fields = ('id', 'reviewer', 'food', 'rating', 'comment')
+		model = 'metrics.Review'
+		fields = ('id', 'reviewer', 'rating', 'comment')
 
 
 class NotificationSerializer(ModelSerializer):
 	class Meta:
-		model = Notification
+		model = 'accounts.UserNotification'
 		fields = ('id', 'type', 'text')
 
+
+class RestaurantSerializer(ModelSerializer):
+	owner = BusinessAccountSerializer()
+	class Meta:
+		model = Restaurant
+		fields = (
+			'about', 'banner', 'name',
+			'slug', 'logo', 'links',
+			'owner'
+			)

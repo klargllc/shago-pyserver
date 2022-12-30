@@ -50,3 +50,9 @@ def get_average_rating(reviews):
 	return "0.0"
 
 
+def slugify(string):
+	string = string.lower().replace(' ', '-').replace("'", '')
+	string = string.replace('.', '')
+	return string
+
+
