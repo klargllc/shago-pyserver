@@ -19,7 +19,6 @@ django-channels==0.7.0
 django-cors==0.1
 django-cors-headers==3.5.0
 django-froala-editor==3.2.2
-django-hosts==4.0
 django-sms==0.5.0
 djangorestframework==3.12.2
 djangorestframework-simplejwt==4.6.0
@@ -28,8 +27,6 @@ hiredis==2.0.0
 hyperlink==21.0.0
 idna==2.10
 incremental==17.5.0
-Markdown==3.3.3
-martor==1.5.8
 msgpack==1.0.2
 oauth==1.0.1
 oauthlib==3.1.0
