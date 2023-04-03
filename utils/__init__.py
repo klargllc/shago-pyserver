@@ -16,7 +16,7 @@ def calc_vat(order):
 	return Decimal('1.23')
 
 
-def calc_processing_fee(order):
+def calc_processing_fee(order_total):
 	return Decimal('2.03')
 
 # decorators

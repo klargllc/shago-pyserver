@@ -81,7 +81,6 @@ def generate_feed(food_items, liked_tags, follows):
 
 
 
-
 # decorators
 def required_params(*params):
 	def decorator(main_view):
@@ -279,7 +278,8 @@ def cart_view(request):
 @api_view(["GET", "POST"])
 @required_params('place')
 def checkout_view(request):
-	customer = request.user.customer
+	customer = Customer.objects.get(user=request.user)
+
 	if request.method == "POST":
 		order = Order(
 			owner=customer,
@@ -290,7 +290,7 @@ def checkout_view(request):
 		order.save()
 		return Response(data=OrderSerializer(order).data)
 
-	cart_items = customer.cart.all()
+	cart_items = BuyerCart.objects.get(owner=customer, restaurant=request.place)
 	total = (
 			calc_subtotal(cart_items) +
 			calc_deivery_fee(cart_items) +

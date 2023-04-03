@@ -2,6 +2,8 @@ from rest_framework.serializers import (
 	ModelSerializer,
 	StringRelatedField,
 	HyperlinkedRelatedField,
+	SerializerMethodField,
+	SlugRelatedField,
 )
 from ..models import *
 from accounts.models import(
@@ -62,9 +64,16 @@ class CustomerSerializer(ModelSerializer):
 
 
 class FoodImageSerializer(ModelSerializer):
+	url = SerializerMethodField()
+	
 	class Meta:
-		fields =('image_url', 'id')
+		fields =('url', 'id')
 		model = FoodImage
+
+	def get_url(self, obj):
+		req = self.context.get('request')
+		url = req.build_absolute_uri(obj.image.url)
+		return url
 
 
 class CustomizationOptionSerializer(ModelSerializer):
@@ -83,6 +92,7 @@ class CustomizationSerializer(ModelSerializer):
 
 class FoodSerializer(ModelSerializer):
 	images = FoodImageSerializer(many=True)
+	image = FoodImageSerializer()
 	customizations = CustomizationSerializer(many=True)
 	category = StringRelatedField()
 	
@@ -101,6 +111,17 @@ class OrderItemSerializer(ModelSerializer):
 	class Meta:
 		fields = ('item', 'id', 'quantity', 'total')
 		model = OrderItem
+
+
+class CartSerializer(ModelSerializer):
+    items = OrderItemSerializer(many=True)
+    owner = StringRelatedField()
+    restaurant = StringRelatedField()
+
+    class Meta:
+        model = BuyerCart
+        fields = '__all__'
+
 
 
 class OrderSerializer(ModelSerializer):
@@ -133,5 +154,5 @@ class RestaurantSerializer(ModelSerializer):
 		fields = (
 			'about', 'banner', 'name',
 			'slug', 'logo', 'links',
-			'owner'
+			'owner', 'categories', 'reviews'
 			)

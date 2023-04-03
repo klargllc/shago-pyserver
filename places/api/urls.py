@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
 	signup_view,
 	login_view,
+	place_view,
 	menu_view,
 	item_detail_view,
 	cart_view,
@@ -33,4 +34,5 @@ urlpatterns = [
 	path('me/orders/', user_account_orders_view),
 	path('me/orders/view/', user_account_orders_view),
 	path('notifications/', notifications_view),
+	path('place/', place_view),
 ]

@@ -74,6 +74,10 @@ class UserProfile(models.Model):
 	class Meta:
 		abstract = True
 
+	@property
+	def name(self):
+	    return self.user.name
+
 
 class BusinessAccount(UserProfile):
 	store = models.OneToOneField("places.Restaurant", blank=True, null=True, on_delete=models.SET_NULL)
@@ -99,7 +103,7 @@ class RestaurantStaff(UserProfile):
 
 
 class BillingMethod(models.Model):
-	owner = models.ForeignKey("Account", on_delete=models.CASCADE)
+	owner = models.OneToOneField("places.Restaurant", on_delete=models.CASCADE)
 	name_on_card = models.CharField(max_length=200)
 	address = models.CharField(max_length=500)
 	card_number = models.CharField(max_length=16)
@@ -109,6 +113,15 @@ class BillingMethod(models.Model):
 
 	def __str__(self):
 		return self.name_on_card
+
+
+# withdrawal
+class PaymentInformation(models.Model):
+	place = models.OneToOneField('places.Restaurant', on_delete=models.CASCADE)
+	bank_name = models.CharField(max_length=150)
+	account_name = models.CharField(max_length=150)
+	account_number = models.CharField(max_length=150)
+	bank_code = models.CharField(max_length=150)
 
 
 class ShippingAddress(models.Model):
@@ -124,11 +137,11 @@ class ShippingAddress(models.Model):
 
 
 class Customer(UserProfile):
-	cart = models.ManyToManyField("places.OrderItem", blank=True)
+	carts = models.ManyToManyField("places.BuyerCart", blank=True)
 	orders = models.ManyToManyField("places.Order", blank=True, related_name='orders')
 
-	# def __str__(self):
-	# 	return self.user.email
+	def __str__(self):
+		return self.user.name
 
 	class Meta:
 		abstract = False
@@ -138,9 +151,36 @@ class Customer(UserProfile):
 
 
 class UserNotification(models.Model):
-	msg_type = models.CharField(max_length=20)
+	user = models.ForeignKey("Customer", on_delete=models.CASCADE)
+	priority = models.CharField(max_length=20)
 	message = models.TextField()
-	to = models.ForeignKey("Customer", on_delete=models.CASCADE)
+	created = models.DateTimeField(auto_now=True)
 
-	class Meta:
-		abstract = False
+
+	def __str__(self):
+		pass
+
+
+class Integration(models.Model):
+	service = models.CharField(max_length=100, blank=True, null=True)
+	token = models.CharField(max_length=70, blank=True, null=True)
+	webhook_endpoint = models.URLField(blank=True, null=True)
+	related_place = models.ForeignKey("places.Restaurant", on_delete=models.CASCADE)
+	permission = models.BooleanField(default=False)
+	date_approved = models.DateField(blank=True, null=True)
+	instance_id = models.CharField(max_length=200, unique=True)
+	app_id = models.CharField(max_length=200, unique=True) # unique identifier
+
+
+	def __str__(self):
+		return self.service
+
+
+
+# Base settings for any restaurant
+# class SiteSettings(models.Model):
+# 	site = models.OneToOneField('Site', on_delete=models.CASCADE)
+# 	# brand_color_palette = models
+# 	site_name = pass
+# 	custom_url = pass
+# 	dns_location = pass # dns url endpoint
