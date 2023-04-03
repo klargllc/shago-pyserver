@@ -33,9 +33,8 @@ class Category(models.Model):
 		return self.name
 
 
-
 class NotificationMessage(models.Model):
-	msg_type = models.CharField(max_length=20)
+	priority = models.CharField(max_length=20)
 	message = models.TextField()
 	to = models.ForeignKey("Restaurant", on_delete=models.CASCADE)
 
@@ -74,7 +73,7 @@ class FoodItem(models.Model):
 	def image(self):
 		imgs = list(self.images.all())
 		if len(imgs) > 0:
-			return parse_image_url(imgs[0])
+			return imgs[0]
 		return None
 
 	def save(self, *args, **kwargs):
@@ -94,10 +93,6 @@ class FoodImage(models.Model):
 	def delete(self):
 		os.remove(os.path.abspath(self.image.path))
 		super().delete()
-
-	@property
-	def image_url(self):
-		return 'http://localhost:8000' + self.image.url
 
 
 class Customization(models.Model):
@@ -128,21 +123,46 @@ class CustomizationOption(models.Model):
 
 
 class Restaurant(models.Model):
+	store_mode = models.CharField(max_length=100, default='test') # test | live
+	disabled = models.BooleanField(default=False)
+
+	# Basic Info
 	name = models.CharField(max_length=200)
 	slug = models.SlugField(blank=True, null=True)
+	banner = models.ImageField(upload_to="places/banner", blank=True, null=True)
+	logo = models.ImageField(upload_to="places/logo", blank=True, null=True)
+	about = models.TextField(blank=True, null=True)
+	links = models.ManyToManyField("Link", blank=True)
+	domian_name = models.CharField(max_length=100, blank=True, null=True)
+
 	owner = models.OneToOneField("accounts.BusinessAccount", on_delete=models.CASCADE)
+	staff = models.ManyToManyField("accounts.RestaurantStaff", blank=True, related_name='staff')
+
+	# Menu, Orders and Reviews
 	menu = models.ManyToManyField("FoodItem", blank=True)
 	categories = models.ManyToManyField("Category", blank=True)
-	staff = models.ManyToManyField("accounts.RestaurantStaff", blank=True, related_name='staff')
 	tags = models.ManyToManyField("Tag", blank=True)
 	reviews = models.ManyToManyField("metrics.Review", blank=True)
 	orders = models.ManyToManyField("Order", blank=True)
 	notifications = models.ManyToManyField("NotificationMessage", blank=True)
-	banner = models.ImageField(upload_to="places/banner", blank=True, null=True)
-	logo = models.ImageField(upload_to="places/logo", blank=True, null=True)
-	about = models.TextField(blank=True, null=True)
 	customers = models.ManyToManyField('accounts.Customer', blank=True)
-	links = models.ManyToManyField("Link", blank=True)
+
+	# Meta Information
+	offer_delivery = models.BooleanField(default=False)
+	offer_dine_in = models.BooleanField(default=True)
+	offer_pickup = models.BooleanField(default=True)
+
+	# Delivery Method
+	delivery_fulfilment = models.CharField(max_length=20) # in-house / out-sourced
+
+	currency = models.CharField(max_length=10, blank=True, null=True, default='NGN')
+	country = models.CharField(max_length=10, blank=True, null=True, default='NG',)
+
+	# Billing and Payout Info
+	billing_plan = models.CharField(max_length=20, default='free-trial')
+	next_billing_period = models.DateField(null=True, blank=True)
+	current_billing_period = models.DateField(auto_now=True, null=True, blank=True)
+
 
 	def create(self):
 		if not self.slug:
@@ -176,4 +196,22 @@ class Link(models.Model):
 
 	def __str__(self):
 		return self.url
+
+
+class Coupon(models.Model):
+	COUPON_TYPES = (('Flat', 'flat'), ('Percentage', 'percentage'))
+
+	code = models.CharField(max_length=20, unique=True)
+	value = models.DecimalField(max_digits=10, decimal_places=2)
+	value_type = models.CharField(max_length=10, default='flat', choices=COUPON_TYPES)
+	selector_target = models.CharField(max_length=50, blank=True, default='id') # id|category|tag|price
+	selector_value = models.CharField(max_length=100, blank=True, null=True)
+	related_place = models.ForeignKey('places.Restaurant', on_delete=models.CASCADE)
+	redeemers = models.ManyToManyField('accounts.Customer', blank=True)
+
+	def __str__(self):
+		return self.code
+
+
+
 

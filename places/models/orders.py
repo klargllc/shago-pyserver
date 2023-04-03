@@ -17,7 +17,7 @@ class OrderItem(models.Model):
 	customizations = models.ManyToManyField("places.OrderCustomization", blank=True)
 
 	def __str__(self):
-		return self.item.title
+		return self.item.name
 
 	@property
 	def restaurant(self):
@@ -29,6 +29,15 @@ class OrderItem(models.Model):
 		for custom in self.customizations.all():
 			num += custom.option.price
 		return Decimal(num)
+
+
+class BuyerCart(models.Model):
+    items = models.ManyToManyField("OrderItem", blank=True)
+    restaurant = models.ForeignKey("places.Restaurant", on_delete=models.CASCADE)
+    owner = models.ForeignKey("accounts.Customer", on_delete=models.CASCADE)
+    
+    def __str__(self):
+        return f"{self.owner.name}'s cart @ {self.restaurant.name}"
 
 
 class OrderCustomization(models.Model):
@@ -52,7 +61,7 @@ class Order(models.Model):
 		("offline", "offline"),
 		("website", "hotspot"),
 	)
-	source = models.CharField(max_length=20, default='hotspot:admin:web', blank=True, null=True)
+	source = models.CharField(max_length=20, default='web:hotspot', blank=True, null=True)
 	customer = models.ForeignKey("accounts.Customer", on_delete=models.CASCADE)
 	created_on = models.DateTimeField(auto_now=True)
 	items = models.ManyToManyField("OrderItem", blank=True)
@@ -60,10 +69,12 @@ class Order(models.Model):
 	delivered = models.BooleanField(default=False) # delivery_status
 	status = models.CharField(choices=ORDER_STATUS, max_length=20, default='pending')
 	delivery_is_on = models.BooleanField(default=False)
-	invoice = models.CharField(max_length=12, default=generate_invoice_id, unique=True)
+	order_id = models.CharField(max_length=12, default=generate_invoice_id, unique=True)
+	payment_id = models.CharField(max_length=10, blank=True, null=True)
+	invoice = models.CharField(max_length=30, blank=True, null=True)
 
 	def __str__(self):
-		return self.invoice_id
+		return self.order_id
 
 	def subtotal(self):
 		num = 0
