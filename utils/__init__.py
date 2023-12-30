@@ -21,15 +21,13 @@ def calc_processing_fee(order_total):
 
 # decorators
 def required_params(*params):
-	def decorator(main_view):
-		@wraps(main_view)
-		def view_handler(request, *args, **kwargs):
-			for param in params:
-				if not param in request.GET.keys():
-					print("Param missing:", param)
-					return Response(status=400, data={'error': f'{param} param missing'})
-				else:
-					return main_view(request, *args, **kwargs)
-		return view_handler
-	return decorator
-
+    def decorator(view_func):
+        def wrapper(self, request, *args, **kwargs):
+            for param in params:
+                if param not in request.GET:
+                    print(f"Missing Params: {param}")
+                    return Response({"error": f"Missing required parameter: {param}"}, status=400)
+                print(f"Good to go on param: {param}")
+            return view_func(self, request, *args, **kwargs)
+        return wrapper
+    return decorator

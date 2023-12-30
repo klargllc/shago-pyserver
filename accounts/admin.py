@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
 	Account,
 	Customer,
-	BusinessAccount,
+	Merchant,
 	RestaurantStaff,
 	ShippingAddress,
 	BillingMethod,
@@ -14,7 +14,7 @@ from .models import (
 # Register your models here.
 admin.site.register(Account)
 admin.site.register(Customer)
-admin.site.register(BusinessAccount)
+admin.site.register(Merchant)
 admin.site.register(RestaurantStaff)
 admin.site.register(ShippingAddress)
 admin.site.register(BillingMethod)

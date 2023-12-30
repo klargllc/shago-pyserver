@@ -8,9 +8,14 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# APPEND_SLASH = False
+
 # Application definition
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 INSTALLED_APPS = [
+    # 'django_forest',
     # binary.inc
     'accounts',
     'places',
@@ -37,6 +42,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'places.middleware.PlacesMiddleware',
+    'places.middleware.VerboseLogMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -141,3 +147,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.MultiPartParser'
     ]
 }
+
+# FOREST = {
+#    'FOREST_URL': 'https://api.forestadmin.com',
+#    'FOREST_ENV_SECRET': '45afbc785747953f28705f619d98ba726dfacd869d2343e6589d28d0c62d444f',
+#    'FOREST_AUTH_SECRET': 'a473f5295c9884e4f6e789eae5919374923e7057dbf2c01d'
+# }
+

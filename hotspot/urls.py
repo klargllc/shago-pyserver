@@ -7,9 +7,10 @@ from . import webhooks
 
 urlpatterns = [
     path('', include('places.urls', namespace='core')),
+    path('api/', include('api.urls', namespace='api')),
     path('superuser/', admin.site.urls),
-    path('admin/', include('dashboard.urls', namespace='dashboard')),
     path('webhook/', webhooks.successful_payment_webhook, name="checkout-hook"),
+    # path('forest', include('django_forest.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

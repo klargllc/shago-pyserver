@@ -10,10 +10,15 @@ from accounts.models import(
 	Account,
 	Customer,
 	RestaurantStaff,
-	BusinessAccount,
+	Merchant,
+	RestaurantStaffRole
 )
 
 
+class CurrencySerializer(ModelSerializer):
+	class Meta:
+		model = Currency
+		fields = ('code', 'symbol', 'country', 'id')
 
 class PermissionSerializer(ModelSerializer):
 	class Meta:
@@ -21,25 +26,32 @@ class PermissionSerializer(ModelSerializer):
 		fields = '__all__'
 
 
+class StaffRoleSerializer(ModelSerializer):
+	class Meta:
+		model = RestaurantStaffRole
+		fields = '__all__'
+
 class UserSerializer(ModelSerializer):
 	class Meta:
 		fields = ('first_name', 'last_name', 'email',)
 		model = Account
 
 
-class BusinessAccountSerializer(ModelSerializer):
+class MerchantSerializer(ModelSerializer):
 	user = UserSerializer()
 	store = StringRelatedField()
 	class Meta:
 		fields = '__all__'
-		model = BusinessAccount
+		model = Merchant
 
 
 class StaffSerializer(ModelSerializer):
 	user = UserSerializer()
 	place = StringRelatedField()
+	branch_id = StringRelatedField()
+	role = StringRelatedField()
 	class Meta:
-		fields = ('id', 'user', 'staff_id', 'permissions', 'place')
+		fields = ('id', 'user', 'staff_id', 'role', 'place', 'branch_id')
 		model = RestaurantStaff
 
 
@@ -67,7 +79,7 @@ class FoodImageSerializer(ModelSerializer):
 	url = SerializerMethodField()
 	
 	class Meta:
-		fields =('url', 'id')
+		fields = ('url', 'id')
 		model = FoodImage
 
 	def get_url(self, obj):
@@ -76,31 +88,31 @@ class FoodImageSerializer(ModelSerializer):
 		return url
 
 
-class CustomizationOptionSerializer(ModelSerializer):
+class CustomOptionChoiceSerializer(ModelSerializer):
 	class Meta:
-		fields = ('option', 'price')
-		model = CustomizationOption
+		fields = ('name', 'price')
+		model = CustomOptionChoice
 
 
-class CustomizationSerializer(ModelSerializer):
-	options = CustomizationOptionSerializer(many=True)
-	default_option = CustomizationOptionSerializer()
+class OrderOptionSerializer(ModelSerializer):
+	choices = CustomOptionChoiceSerializer(many=True)
+	default_choice = CustomOptionChoiceSerializer()
 	class Meta:
-		fields = ('id', 'title', 'options', 'required', 'default_option')
-		model = Customization
+		fields = ('id', 'name', 'choices', 'required', 'default_choice')
+		model = OrderOption
 
 
 class FoodSerializer(ModelSerializer):
 	images = FoodImageSerializer(many=True)
 	image = FoodImageSerializer()
-	customizations = CustomizationSerializer(many=True)
+	custom_choices = OrderOptionSerializer(many=True)
 	category = StringRelatedField()
 	
 	class Meta:
 		fields = (
 			'id', 'name', 'about', 'slug',
 			'price', 'image', 'tags', 'images', 
-			'category', 'customizations', 'rating',
+			'category', 'custom_choices', 'rating',
 		)
 		model = FoodItem
 
@@ -129,7 +141,7 @@ class OrderSerializer(ModelSerializer):
 	customer = CustomerSerializer()
 
 	class Meta:
-		fields = ('id', 'invoice', 'created_on', 'items', 'customer', 'status', 'delivery_is_on', 'subtotal')
+		fields = ('id', 'order_id', 'invoice', 'created_on', 'items', 'customer', 'status', 'delivery_option', 'subtotal', 'payment_status')
 		model = Order
 
 
@@ -147,12 +159,31 @@ class NotificationSerializer(ModelSerializer):
 		fields = ('id', 'type', 'text')
 
 
+
+class BranchSerializer(ModelSerializer):
+	currency = StringRelatedField()
+	class Meta:
+		model = RestaurantBranch
+		fields = '__all__'
+
 class RestaurantSerializer(ModelSerializer):
-	owner = BusinessAccountSerializer()
+	owner = MerchantSerializer()
+	branches = BranchSerializer(many=True)
+	logo_url = SerializerMethodField()
 	class Meta:
 		model = Restaurant
 		fields = (
 			'about', 'banner', 'name',
-			'slug', 'logo', 'links',
-			'owner', 'categories', 'reviews'
-			)
+			'slug', 'logo_url', 'links',
+			'owner', 'categories', 'reviews',
+			'branches', 'main_branch'
+		)
+	
+	def get_logo_url(self, obj):
+		if obj.logo:
+			request = self.context.get('request')
+			if request:
+				return request.build_absolute_uri(obj.logo.url)
+		return ""
+
+
