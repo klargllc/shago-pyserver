@@ -191,6 +191,9 @@ class Restaurant(DbModel):
 	billing_information = models.ForeignKey('accounts.BillingMethod', blank=True, null=True, on_delete=models.SET_NULL)
 	payout_information = models.ForeignKey('accounts.PayoutInformation', blank=True, null=True, on_delete=models.SET_NULL)
 
+	# Store settings
+	# faqs = models.ManyToManyField()
+	
 
 	def create(self):
 		if not self.slug:

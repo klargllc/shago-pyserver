@@ -26,6 +26,8 @@ from metrics.models import (
 	Review
 )
 from rest_framework.decorators import api_view
+from dashboard.views import required_params
+
 
 #  Helpers
 
@@ -48,9 +50,11 @@ class ParamObject:
 	def __repr__(self):
 		return f'ParamObject: {self.param_list}'
 
+
 def useParams(req):
 	# return a new param object 
 	return ParamObject(req)
+
 
 def get_related_items(place, food):
 	items = place.menu.filter(
@@ -59,10 +63,12 @@ def get_related_items(place, food):
 	).exclude(name__iexact=food.name, id__iexact=food.id)
 	return items
 
+
 def get_featured_items():
 	featured_items = FoodItem.objects.filter(featured=True)
 	featured_items.order_by('?')
 	return
+
 
 def get_cart(person, place):
 	try:
@@ -74,6 +80,7 @@ def get_cart(person, place):
 	finally:
 		return cart
 
+
 def paginate_items(items, request, num_per_page=10):
 	paginator = PageNumberPagination()
 	paginator.page_size = num_per_page
@@ -81,6 +88,7 @@ def paginate_items(items, request, num_per_page=10):
 	paginated_data = paginator.paginate_queryset(items, request)
 	data = paginator.get_paginated_response(paginated_data).data
 	return data
+
 
 def add_to_cart(cart, menu_item, qty):
 	order_item = OrderItem(item=menu_item, quantity=qty)
@@ -148,6 +156,7 @@ def login_view(request):
 		else:
 			return Response(data={'error': True, 'message': 'Invalid login credentials!'}, status=404)
 	except Exception:
+		raise Exception
 		return Response(data={'error': True, 'message': 'Invalid login credentials!'}, status=404)
 
 # =========================================
@@ -184,17 +193,17 @@ def search_view(request):
 	return Response(res)
 
 
-@required_params('place')
+
+# @required_params('place')
 @api_view(['GET'])
 def place_view(request):
-	slug = useParams(request).get('place')
-	place = Restaurant.objects.get(slug=slug)
+	place = request.place
 	data = RestaurantSerializer(place, context={'request': request}).data
 	return Response(data)
 
 
+# @required_params('place')
 @api_view(["GET"])
-@required_params('place')
 def menu_view(request):
 	params = useParams(request)
 	org  = params.get('place')
@@ -230,8 +239,8 @@ def menu_view(request):
 		return Response(data={'error': True, 'message': str(e)}, status=500)
 
 
+# @required_params('place', 'itemId')
 @api_view(["GET"])
-@required_params('place', 'itemId')
 def item_detail_view(request, **kwargs):
 	try:
 		params = useParams(request)
@@ -253,8 +262,8 @@ def item_detail_view(request, **kwargs):
 
 
 
+# @required_params('place')
 @api_view(["GET", "POST"])
-@required_params('place')
 def cart_view(request):
 	customer = Customer.objects.get(user=request.user)
 	params = useParams(request)
@@ -315,8 +324,8 @@ def cart_view(request):
 		return Response(data={'error': True, 'message': str(e)}, status=500)
 
 
+# @required_params('place')
 @api_view(["GET", "POST"])
-@required_params('place')
 def checkout_view(request):
 	customer = Customer.objects.get(user=request.user)
 	params = useParams(request)
@@ -373,8 +382,8 @@ def checkout_view(request):
 	return Response(data=data)
 
 
+# @required_params('place')
 @api_view(["GET", "POST"])
-@required_params('place')
 def leave_a_review(request):
 	if request.method == "POST":
 		review = Review(

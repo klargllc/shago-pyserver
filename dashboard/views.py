@@ -69,16 +69,24 @@ def login_view(request):
 
 		if user:
 			is_owner = False
+			place:Restaurant = get_place_from_user(user)
 
 			try:
 				merchant = Merchant.objects.get(user=user)
-				if merchant:
+				if place.owner == merchant:
 					is_owner = True
-				place = get_place_from_user(user)
+					role = 'owner'
+			except:
+				staff = place.staff.get(user=user)
+				role = staff.role.name
+				is_owner = False
+
+			try:
 				if place:
 					data = {
 						'user': UserSerializer(user).data,
 						'token': Token.objects.get_or_create(user=user)[0].key,
+						'role': role,
 						'place': RestaurantSerializer(place).data,
 						'main_branch': {
 							'branch_name': place.main_branch.branch_name,
@@ -178,8 +186,11 @@ def resource_view(request):
 class DashboardView(APIView):
 	def get(self, request):
 		try:
+			place = Restaurant.objects.get(slug=request.GET.get('place'))
+			recent_orders = OrderSerializer(place.orders.all().order_by('-id')[:10], many=True, context={'request': request}).data
 			data = {
 				'help': None,
+				'recent_orders': recent_orders
 			}
 			return Response(data=data)
 		except Exception as error:
@@ -314,19 +325,32 @@ class EditFoodItemView(RetrieveUpdateDestroyAPIView):
 		action = request.data.get('action', None)
 		data = FoodSerializer(food_item, context={'request': request}).data
 
+		print("Change:", request.data)
 		try:
 			if action and action == "remove-custom-choice":
-				print("Removing Custom Option", request.data)
 				option = food_item.custom_choices.get(id=request.data['object_id'])
 				option.delete()
 			elif action and action == "remove-image": # remove an image
 				img = food_item.images.get(id=request.data['object_id'])
 				img.delete()
-			else: # action isn't provided, so saving changes directly to the object
+			else: # action isn't provided, so save changes directly to the object
 				food_item.name = request.data['name']
 				food_item.about = request.data['about']
 				food_item.category = place.categories.get(name=request.data['category'])
 				food_item.price = request.data['price']
+
+				# Moved to v2.0
+
+				# availability = request.data['availability']
+				# if availability == 'select-stores':
+				# 	select_stores = request.data.get('stores', None)
+				# 	place.branches.in_bulk
+				# 	for location in select_stores:
+				# 		branch:RestaurantBranch = place.branches.get(branch_id=location)
+				# 		branch.menu.add(food_item,)
+				# 		branch.save()
+					
+
 				
 				customizations = request.data.get('customizations', None)
 				if customizations:
